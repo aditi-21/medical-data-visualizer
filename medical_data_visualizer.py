@@ -4,55 +4,72 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 # 1
-df = None
+df = pd.read_csv("medical_examination.csv")
 
 # 2
-df['overweight'] = None
+BMI = df['weight'] / (df['height'] * 0.01) **2
+df['overweight'] = [1 if x > 25 else 0 for x in BMI]
 
 # 3
-
-
+df['gluc'] = [0 if x == 1 else 1 for x in df['gluc']]
+df['cholesterol'] = [0 if x == 1 else 1 for x in df['cholesterol']]
 # 4
 def draw_cat_plot():
-    # 5
-    df_cat = None
-
-
-    # 6
-    df_cat = None
     
+    # 5
+    # df_cat = pd.melt(df, id_vars = ['id', 'age', 'sex', 'height', 'weight', 'ap_hi', 'ap_lo', 'cardio', 'BMI'], value_vars = ['cholesterol', 'gluc', 'smoke', 'alco', 'active', 'overweight'])
+    df_cat = df.melt(id_vars = 'cardio', 
+                     value_vars = ['cholesterol', 'gluc', 'smoke', 'alco', 'active', 'overweight'], 
+                     value_name='value')
+    # 6
+    df_cat = df_cat.groupby(['cardio', 'variable']).agg(total =('value', 'value_counts'))
+    
+    #coverting from groupby object to dataframe, renaming columns
+    df_cat = pd.DataFrame(df_cat.rename(columns={'cardio':'Cardio','variable':'Variable', 'value':'Value'})).reset_index()
+
 
     # 7
-
-
+    catplot = sns.catplot(data=df_cat, x='variable', y='total', col='cardio', kind='bar', hue='value')
 
     # 8
-    fig = None
+    fig= catplot.fig
 
 
     # 9
     fig.savefig('catplot.png')
     return fig
 
-
-# 10
+#10             
 def draw_heat_map():
     # 11
-    df_heat = None
+    df_heat = df[(df['ap_lo'] <= df['ap_hi']) & 
+    (df['height'] >= df['height'].quantile(0.025)) &
+    (df['height'] <= df['height'].quantile(0.975)) &
+    (df['weight'] >= df['weight'].quantile(0.025)) &
+    (df['weight'] <= df['weight'].quantile(0.975))]
 
     # 12
-    corr = None
+    corr = df_heat.corr()
 
     # 13
-    mask = None
+    mask = np.triu(np.ones_like(corr, dtype=bool))
 
 
 
     # 14
-    fig, ax = None
+    fig, ax = plt.subplots()
 
     # 15
-
+    sns.heatmap(data=corr, 
+                annot=True, 
+                fmt=".1f", 
+                linewidth=.5, 
+                mask=mask, 
+                annot_kws={'fontsize':6}, 
+                cbar_kws={"shrink": .7}, 
+                square=False, 
+                center=0, 
+                vmax=0.30)
 
 
     # 16
